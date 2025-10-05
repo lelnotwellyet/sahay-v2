@@ -1,0 +1,98 @@
+.session-request-container {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.session-request-card {
+  border: 2px solid #e3f2fd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #f8fdff;
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.request-header h4 {
+  color: #1976d2;
+  margin: 0;
+}
+
+.request-time {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.client-info {
+  font-size: 1.1em;
+  margin-bottom: 8px;
+}
+
+.session-details p {
+  margin: 4px 0;
+  color: #555;
+}
+
+.urgency {
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+  font-size: 0.9em;
+}
+
+.urgency.high {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.urgency.medium {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.urgency.low {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.request-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.accept-btn {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.accept-btn:hover {
+  background: #45a049;
+}
+
+.decline-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.decline-btn:hover {
+  background: #da190b;
+}

@@ -1,0 +1,153 @@
+.auth-selection-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.auth-selection-card {
+  background: white;
+  border-radius: 15px;
+  padding: 3rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+
+.auth-selection-card h1 {
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-size: 2.5rem;
+  font-weight: 300;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.auth-options {
+  display: flex;
+  gap: 2rem;
+  align-items: stretch;
+}
+
+.auth-option {
+  flex: 1;
+  padding: 2rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+}
+
+.auth-option:hover {
+  border-color: #667eea;
+  transform: translateY(-5px);
+}
+
+.auth-option h2 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.auth-option p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+}
+
+.auth-btn {
+  display: block;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.client-btn {
+  background: #667eea;
+  color: white;
+}
+
+.client-btn:hover {
+  background: #5a6fd8;
+  transform: translateY(-2px);
+}
+
+.counsellor-btn {
+  background: #f093fb;
+  color: white;
+}
+
+.counsellor-btn:hover {
+  background: #e879f9;
+  transform: translateY(-2px);
+}
+
+.login-link {
+  margin-top: auto;
+  font-size: 0.9rem;
+}
+
+.login-link a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 0 1rem;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e0e0e0;
+}
+
+.divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #666;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .auth-options {
+    flex-direction: column;
+  }
+  
+  .divider {
+    margin: 1rem 0;
+  }
+  
+  .divider::before {
+    left: 0;
+    right: 0;
+    height: 2px;
+    width: auto;
+    top: 50%;
+  }
+}

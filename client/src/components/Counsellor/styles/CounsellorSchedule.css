@@ -1,0 +1,267 @@
+.counsellor-schedule {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.back-button {
+  background: none;
+  border: 1px solid #3498db;
+  color: #3498db;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.back-button:hover {
+  background: #3498db;
+  color: white;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 30px;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.page-header h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+.page-header p {
+  color: #7f8c8d;
+  font-size: 18px;
+  margin: 0;
+}
+
+.schedule-content {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Days Navigation */
+.days-navigation {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #ecf0f1;
+  padding-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.day-tab {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+  color: #5a6c7d;
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+}
+
+.day-tab:hover {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.day-tab.active {
+  background: #3498db;
+  border-color: #3498db;
+  color: white;
+}
+
+/* Day Schedule */
+.day-schedule {
+  margin-bottom: 30px;
+}
+
+.schedule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.schedule-header h2 {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 24px;
+}
+
+.day-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.action-btn.available {
+  background: #27ae60;
+  color: white;
+}
+
+.action-btn.available:hover {
+  background: #219a52;
+}
+
+.action-btn.unavailable {
+  background: #e74c3c;
+  color: white;
+}
+
+.action-btn.unavailable:hover {
+  background: #c0392b;
+}
+
+/* Time Slots */
+.time-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.time-slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 2px solid #ecf0f1;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.time-slot.available {
+  border-left: 4px solid #27ae60;
+  background: #f8fff9;
+}
+
+.time-slot.unavailable {
+  border-left: 4px solid #e74c3c;
+  background: #fff8f8;
+}
+
+.time-slot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.slot-time {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.toggle-btn.available {
+  background: #27ae60;
+  color: white;
+}
+
+.toggle-btn.unavailable {
+  background: #e74c3c;
+  color: white;
+}
+
+/* Schedule Summary */
+.schedule-summary {
+  border-top: 1px solid #ecf0f1;
+  padding-top: 30px;
+}
+
+.schedule-summary h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.day-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.slot-count {
+  color: #27ae60;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .days-navigation {
+    flex-direction: column;
+  }
+  
+  .schedule-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .day-actions {
+    justify-content: center;
+  }
+  
+  .time-slots {
+    grid-template-columns: 1fr;
+  }
+  
+  .time-slot {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+}

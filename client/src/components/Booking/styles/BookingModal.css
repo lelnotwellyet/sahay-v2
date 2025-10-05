@@ -1,0 +1,255 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.booking-modal {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 20px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #7f8c8d;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.close-button:hover {
+  background: #f8f9fa;
+  color: #e74c3c;
+}
+
+.counselor-info {
+  display: flex;
+  align-items: center;
+  padding: 20px 25px;
+  background: #f8f9fa;
+  gap: 15px;
+}
+
+.counselor-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.counselor-details h3 {
+  margin: 0 0 5px 0;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.counselor-details p {
+  margin: 0 0 8px 0;
+  color: #7f8c8d;
+  font-size: 14px;
+}
+
+.price {
+  font-weight: 700;
+  color: #27ae60;
+  font-size: 16px;
+}
+
+.booking-form {
+  padding: 25px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 14px;
+}
+
+.session-type-options {
+  display: flex;
+  gap: 15px;
+}
+
+.session-type-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  flex: 1;
+}
+
+.session-type-option:hover {
+  border-color: #3498db;
+}
+
+.session-type-option input[type="radio"] {
+  margin: 0;
+}
+
+.session-type-option span {
+  font-weight: 500;
+}
+
+.session-type-option input[type="radio"]:checked + span {
+  color: #3498db;
+}
+
+.session-type-option input[type="radio"]:checked ~ * {
+  border-color: #3498db;
+}
+
+.form-select,
+.form-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+}
+
+.booking-summary {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 25px 0;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #5a6c7d;
+  font-size: 14px;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #dee2e6;
+  font-weight: 700;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.cancel-button,
+.confirm-button {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.cancel-button {
+  background: #95a5a6;
+  color: white;
+}
+
+.cancel-button:hover {
+  background: #7f8c8d;
+}
+
+.confirm-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.confirm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+  }
+  
+  .session-type-options {
+    flex-direction: column;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+}

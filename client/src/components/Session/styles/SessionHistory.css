@@ -1,0 +1,82 @@
+.session-history {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.back-button {
+  background: none;
+  border: 1px solid #3498db;
+  color: #3498db;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: all 0.3s;
+}
+
+.back-button:hover {
+  background: #3498db;
+  color: white;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 30px;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.page-header h1 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+  font-size: 32px;
+}
+
+.page-header p {
+  color: #7f8c8d;
+  font-size: 18px;
+  margin: 0;
+}
+
+.coming-soon {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.feature-preview h3 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.feature-preview p {
+  font-size: 16px;
+  color: #7f8c8d;
+  margin-bottom: 15px;
+}
+
+.feature-preview ul {
+  text-align: left;
+  display: inline-block;
+  margin: 20px 0;
+}
+
+.feature-preview li {
+  margin: 10px 0;
+  color: #5a6c7d;
+  font-size: 15px;
+}
+
+.note {
+  font-style: italic;
+  color: #e67e22 !important;
+  margin-top: 20px !important;
+}
