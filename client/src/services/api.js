@@ -40,7 +40,7 @@ export const sessionService = {
   accept: (id) => api.put(`/sessions/${id}/accept`),
   reject: (id) => api.put(`/sessions/${id}/reject`),
   complete: (id) => api.put(`/sessions/${id}/complete`),
-   cancel: (id) => api.put(`/sessions/${id}/cancel`),
+   cancel: (id) => api.put(`/sessions/${id}/cancel`), 
 };
 
 export default api;

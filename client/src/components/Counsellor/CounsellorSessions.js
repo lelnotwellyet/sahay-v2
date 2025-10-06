@@ -27,44 +27,29 @@ const CounsellorSessions = () => {
     }
   };
 
-  const handleAcceptSession = async (sessionId) => {
-    try {
-      const response = await sessionService.accept(sessionId);
-      if (response.data.success) {
-        alert('Session accepted successfully!');
-        loadSessions();
-      }
-    } catch (error) {
-      console.error('Error accepting session:', error);
-      alert('Failed to accept session');
+ const handleAcceptSession = async (sessionId) => {
+  try {
+    const response = await sessionService.accept(sessionId);
+    if (response.data.success) {
+      alert('Session accepted successfully! The client has been notified and can now join the video call.');
+      loadSessions(); // Refresh the list to show updated status
     }
-  };
+  } catch (error) {
+    console.error('Error accepting session:', error);
+    alert('Failed to accept session');
+  }
+};
 
   const handleRejectSession = async (sessionId) => {
     try {
       const response = await sessionService.reject(sessionId);
       if (response.data.success) {
         alert('Session rejected');
-        loadSessions();
+        loadSessions(); // Refresh the list
       }
     } catch (error) {
       console.error('Error rejecting session:', error);
       alert('Failed to reject session');
-    }
-  };
-
-  const handleCancelSession = async (sessionId) => {
-    if (window.confirm('Are you sure you want to cancel this session? The client will be notified.')) {
-      try {
-        const response = await sessionService.cancel(sessionId);
-        if (response.data.success) {
-          alert('Session cancelled successfully!');
-          loadSessions();
-        }
-      } catch (error) {
-        console.error('Error cancelling session:', error);
-        alert(error.response?.data?.message || 'Failed to cancel session');
-      }
     }
   };
 
@@ -73,7 +58,7 @@ const CounsellorSessions = () => {
       const response = await sessionService.complete(sessionId);
       if (response.data.success) {
         alert('Session marked as completed');
-        loadSessions();
+        loadSessions(); // Refresh the list
       }
     } catch (error) {
       console.error('Error completing session:', error);
@@ -94,7 +79,7 @@ const CounsellorSessions = () => {
       pending: { text: 'Pending', class: 'pending' },
       accepted: { text: 'Confirmed', class: 'confirmed' },
       completed: { text: 'Completed', class: 'completed' },
-      rejected: { text: 'Rejected', class: 'cancelled' },
+      rejected: { text: 'Rejected', class: 'rejected' },
       cancelled: { text: 'Cancelled', class: 'cancelled' }
     };
     
@@ -216,12 +201,6 @@ const CounsellorSessions = () => {
                         onClick={() => handleCompleteSession(session._id)}
                       >
                         Mark Complete
-                      </button>
-                      <button 
-                        className="action-btn danger"
-                        onClick={() => handleCancelSession(session._id)}
-                      >
-                        Cancel Session
                       </button>
                     </>
                   )}

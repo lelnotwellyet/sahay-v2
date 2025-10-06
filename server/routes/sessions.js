@@ -197,5 +197,4 @@ router.put('/:id/cancel', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error while cancelling session' });
   }
 });
-
 module.exports = router;
