@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-// ❌ REMOVE: import { loginUser } from '../../services/auth'; // Not needed anymore
 import { useAuth } from '../../context/AuthContext';
 import './styles/Login.css';
 
@@ -11,7 +10,6 @@ const Login = () => {
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    // Destructure the login function from the context
     const { login } = useAuth(); 
 
     const handleChange = (e) => {
@@ -57,11 +55,9 @@ const Login = () => {
 
         setLoading(true);
         try {
-            // ✅ UPDATED: Call the context's login function directly with formData
             const loginResult = await login(formData);
 
             if (!loginResult.success) {
-                // If login failed, throw an error to be caught below
                 throw new Error(loginResult.error || 'Login failed.');
             }
 
@@ -83,8 +79,7 @@ const Login = () => {
         } catch (error) {
             console.error('Login error:', error);
 
-            // Use the error message returned from the context
-            const message = error.response?.data?.message || error.message;
+            const message = error.message;
 
             if (message.includes('verify')) {
                 alert('Please verify your email before logging in. Check your email for the verification link.');

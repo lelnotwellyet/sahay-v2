@@ -24,9 +24,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        // For now, we'll just validate the token exists
-        // You can add a profile endpoint later if needed
-        const userData = localStorage.getItem('userData');
+        const userData = localStorage.getItem('user');
         if (userData) {
           setUser(JSON.parse(userData));
           setIsAuthenticated(true);
@@ -35,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('token');
-      localStorage.removeItem('userData');
+      localStorage.removeItem('user');
     } finally {
       setLoading(false);
     }
@@ -47,7 +45,7 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
-      localStorage.setItem('userData', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       setIsAuthenticated(true);
       
@@ -90,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);
-      localStorage.setItem('userData', JSON.stringify(user));
+      localStorage.setItem('user', JSON.stringify(user));
       setUser(user);
       setIsAuthenticated(true);
       
@@ -117,14 +115,14 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('userData');
+    localStorage.removeItem('user');
     setUser(null);
     setIsAuthenticated(false);
   };
 
   const updateProfile = (userData) => {
     setUser(prev => ({ ...prev, ...userData }));
-    localStorage.setItem('userData', JSON.stringify({ ...user, ...userData }));
+    localStorage.setItem('user', JSON.stringify({ ...user, ...userData }));
   };
 
   const value = {

@@ -1,77 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { verifyOTP, resendOTP } from '../../services/auth';
+import { useAuth } from '../../context/AuthContext';
 import './styles/VerifyOTP.css';
 
 const VerifyOTP = () => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
+  const { verifyOtp, resendOtp } = useAuth();
 
-  const { email } = location.state || {};
+  const { email, message } = location.state || {};
 
-  useEffect(() => {
+  // Redirect if no email in state
+  React.useEffect(() => {
     if (!email) {
-      navigate('/');
+      navigate('/register');
     }
   }, [email, navigate]);
 
-  useEffect(() => {
-    let timer;
-    if (countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    }
-    return () => clearTimeout(timer);
-  }, [countdown]);
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-
-    setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
-
-    // Focus next input
-    if (element.nextSibling && element.value !== '') {
-      element.nextSibling.focus();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace' && !e.target.value && e.target.previousSibling) {
-      e.target.previousSibling.focus();
-    }
-  };
-
-  const handleSubmit = async (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
-    const otpValue = otp.join('');
-
-    if (otpValue.length !== 6) {
-      alert('Please enter the 6-digit OTP');
+    
+    if (!otp || otp.length !== 6) {
+      alert('Please enter a valid 6-digit OTP');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await verifyOTP({ email, otp: otpValue });
-      alert('Email verified successfully!');
-      
-      // Save token and redirect
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
-      if (response.data.user.role === 'client') {
-        navigate('/client-dashboard');
+      const result = await verifyOtp({ email, otp });
+
+      if (result.success) {
+        alert('Email verified successfully! You are now logged in.');
+        
+        // Redirect based on user role
+        const user = result.user;
+        if (user.role === 'client') {
+          navigate('/client-dashboard');
+        } else if (user.role === 'counsellor') {
+          navigate('/counsellor-dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       } else {
-        navigate('/counsellor-dashboard');
+        alert(result.error || 'OTP verification failed. Please try again.');
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Invalid OTP. Please try again.');
-      setOtp(['', '', '', '', '', '']);
-      // Focus first input
-      document.getElementById('otp-0').focus();
+      console.error('OTP verification error:', error);
+      alert('OTP verification failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -80,65 +58,85 @@ const VerifyOTP = () => {
   const handleResendOTP = async () => {
     setResendLoading(true);
     try {
-      await resendOTP({ email });
-      setCountdown(60); // 60 seconds countdown
-      alert('New verification code sent!');
+      const result = await resendOtp(email);
+
+      if (result.success) {
+        alert(result.data?.message || 'Verification code sent successfully!');
+      } else {
+        alert(result.error || 'Failed to resend verification code.');
+      }
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to resend OTP. Please try again.');
+      console.error('Resend OTP error:', error);
+      alert('Failed to resend verification code. Please try again.');
     } finally {
       setResendLoading(false);
     }
   };
 
   if (!email) {
-    return null;
+    return (
+      <div className="verify-otp-container">
+        <div className="verify-otp-card">
+          <h2>Invalid Access</h2>
+          <p>Please complete registration first.</p>
+          <button onClick={() => navigate('/register')} className="submit-btn">
+            Go to Registration
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="otp-container">
-      <div className="otp-card">
-        <div className="otp-header">
-          <h1>Verify Your Email</h1>
-          <p>We sent a 6-digit code to {email}</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="otp-form">
-          <div className="otp-inputs">
-            {otp.map((data, index) => (
-              <input
-                key={index}
-                id={`otp-${index}`}
-                type="text"
-                maxLength="1"
-                value={data}
-                onChange={(e) => handleOtpChange(e.target, index)}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                onFocus={(e) => e.target.select()}
-                disabled={loading}
-                className="otp-input"
-              />
-            ))}
+    <div className="verify-otp-container">
+      <div className="verify-otp-card">
+        <h1>Verify Your Email</h1>
+        <p className="subtitle">
+          {message || 'Enter the 6-digit verification code sent to your email'}
+        </p>
+        <p className="email-display">Sent to: <strong>{email}</strong></p>
+        
+        <form onSubmit={handleVerify} className="verify-form">
+          <div className="form-group">
+            <label htmlFor="otp">Verification Code</label>
+            <input
+              type="text"
+              id="otp"
+              name="otp"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              placeholder="Enter 6-digit code"
+              maxLength={6}
+              pattern="\d{6}"
+              required
+            />
+            <small>Enter the 6-digit code from your email</small>
           </div>
 
           <button 
             type="submit" 
-            className={`verify-button ${loading ? 'loading' : ''}`}
-            disabled={loading}
+            className="submit-btn verify-btn"
+            disabled={loading || otp.length !== 6}
           >
             {loading ? 'Verifying...' : 'Verify Email'}
           </button>
         </form>
 
-        <div className="otp-footer">
+        <div className="resend-section">
           <p>Didn't receive the code?</p>
           <button 
             onClick={handleResendOTP}
-            disabled={resendLoading || countdown > 0}
-            className="resend-button"
+            disabled={resendLoading}
+            className="resend-btn"
           >
-            {resendLoading ? 'Sending...' : countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
+            {resendLoading ? 'Sending...' : 'Resend Verification Code'}
           </button>
         </div>
+
+        <p className="support-text">
+          If you're having trouble receiving the email, please check your spam folder 
+          or contact support.
+        </p>
       </div>
     </div>
   );
