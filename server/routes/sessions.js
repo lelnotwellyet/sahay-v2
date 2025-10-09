@@ -1,6 +1,6 @@
 const express = require('express');
 const Session = require('../models/session');
-const { User, Counsellor, Client } = require('../models/user');
+const { Client, Counsellor } = require('../models/user');
 
 const router = express.Router();
 
@@ -33,20 +33,15 @@ router.post('/book', async (req, res) => {
       notes,
       price,
       status: 'pending',
-      paymentStatus: 'completed' // For now, assuming payment is done
+      paymentStatus: 'completed'
     });
 
     await session.save();
 
-    // Populate the session with additional data for response
-    const populatedSession = await Session.findById(session._id)
-      .populate('clientId', 'email')
-      .populate('counsellorId', 'email');
-
     res.status(201).json({
       success: true,
       message: 'Session booked successfully! Waiting for counsellor confirmation.',
-      session: populatedSession
+      session
     });
 
   } catch (error) {
@@ -161,6 +156,7 @@ router.put('/:id/complete', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 // Cancel session
 router.put('/:id/cancel', async (req, res) => {
   try {
@@ -170,7 +166,6 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Session not found' });
     }
 
-    // Check if user has permission to cancel (either client or counsellor of this session)
     const isClient = session.clientId.toString() === req.userId;
     const isCounsellor = session.counsellorId.toString() === req.userId;
     
@@ -178,7 +173,6 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to cancel this session' });
     }
 
-    // Only allow cancellation for pending or accepted sessions
     if (!['pending', 'accepted'].includes(session.status)) {
       return res.status(400).json({ success: false, message: 'Session cannot be cancelled at this stage' });
     }
@@ -197,4 +191,5 @@ router.put('/:id/cancel', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error while cancelling session' });
   }
 });
+
 module.exports = router;

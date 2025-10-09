@@ -1,9 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+// For production, use environment variable; for development, use localhost
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? process.env.REACT_APP_API_BASE_URL 
+  : 'http://localhost:5000/api';
+
+console.log('API Base URL:', API_BASE_URL); // Debug log
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 10000, // 10 second timeout
 });
 
 // Add a request interceptor to include the auth token if available
@@ -20,6 +26,19 @@ api.interceptors.request.use(
   }
 );
 
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: (credentials) => api.post('/auth/login', credentials),
   registerClient: (data) => api.post('/auth/register/client', data),
@@ -31,6 +50,10 @@ export const authService = {
 export const counsellorService = {
   getAll: () => api.get('/counsellors'),
   getById: (id) => api.get(`/counsellors/${id}`),
+};
+
+export const availabilityService = {
+  updateAvailability: (isAvailable) => api.put('/counsellors/availability', { isAvailable }),
 };
 
 export const sessionService = {

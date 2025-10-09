@@ -3,12 +3,31 @@ const { Counsellor, User } = require('../models/user');
 
 const router = express.Router();
 
+// Auth middleware for protected routes
+const authMiddleware = (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+  
+  if (!token) {
+    return res.status(401).json({ message: 'No token, authorization denied' });
+  }
+
+  try {
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
+    req.userId = decoded.userId;
+    req.userRole = decoded.role;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
+
 // Get all verified counsellors
 router.get('/', async (req, res) => {
   try {
     const counsellors = await Counsellor.find({ isVerified: true })
       .populate('userId', 'email isActive')
-      .select('-verificationDocuments'); // Exclude sensitive documents
+      .select('-verificationDocuments');
 
     // Format the response to match frontend expectations
     const formattedCounsellors = counsellors.map(counsellor => ({
@@ -16,12 +35,12 @@ router.get('/', async (req, res) => {
       name: counsellor.fullName,
       specialty: counsellor.specialization?.[0] || 'General Counseling',
       description: counsellor.bio || 'Professional mental health counselor',
-      rating: 4.5, // You can add ratings later
-      reviews: Math.floor(Math.random() * 50) + 10, // Temporary - add real reviews later
+      rating: 4.5,
+      reviews: Math.floor(Math.random() * 50) + 10,
       experience: counsellor.yearsOfExperience,
-      languages: ['English'], // You can add this field to your model later
-      nextAvailable: 'Today', // You can add availability system later
-      price: 50 + (counsellor.yearsOfExperience * 5), // Dynamic pricing based on experience
+      languages: ['English'],
+      nextAvailable: 'Today',
+      price: 50 + (counsellor.yearsOfExperience * 5),
       available: counsellor.isAvailable,
       image: `https://ui-avatars.com/api/?name=${encodeURIComponent(counsellor.fullName)}&background=random&size=200`
     }));
@@ -61,6 +80,41 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching counsellor'
+    });
+  }
+});
+
+// Update counsellor availability (PROTECTED ROUTE)
+router.put('/availability', authMiddleware, async (req, res) => {
+  try {
+    const { isAvailable } = req.body;
+    const userId = req.userId;
+
+    const counsellor = await Counsellor.findOneAndUpdate(
+      { userId: userId },
+      { isAvailable: isAvailable },
+      { new: true }
+    ).populate('userId', 'email');
+
+    if (!counsellor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counsellor not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `You are now ${isAvailable ? 'available' : 'unavailable'} for sessions`,
+      data: {
+        isAvailable: counsellor.isAvailable
+      }
+    });
+  } catch (error) {
+    console.error('Error updating availability:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating availability'
     });
   }
 });

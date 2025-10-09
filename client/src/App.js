@@ -7,9 +7,7 @@ import CounsellorDashboard from './components/Dashboard/CounsellorDashboard';
 import CounsellorSchedule from './components/Counsellor/CounsellorSchedule';
 import CounsellorSessions from './components/Counsellor/CounsellorSessions';
 import CounsellorClients from './components/Counsellor/CounsellorClients';
-
-
-
+import AdminDashboard from './components/Dashboard/AdminDashboard';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import AuthSelection from './components/Auth/AuthSelection';
@@ -36,11 +34,10 @@ function App() {
             <Route path="/my-sessions" element={<MySessions />} />
             <Route path="/session-history" element={<SessionHistory />} /> 
             <Route path="/counsellor-schedule" element={<CounsellorSchedule />} />
-             <Route path="/counsellor-sessions" element={<CounsellorSessions />} />
-             <Route path="/counsellor-clients" element={<CounsellorClients />} />
-            
-            
-            <Route path="/admin-dashboard" element={<div>Admin Dashboard - Coming Soon</div>} />
+            <Route path="/counsellor-sessions" element={<CounsellorSessions />} />
+            <Route path="/counsellor-clients" element={<CounsellorClients />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            {/* REMOVED DUPLICATE: <Route path="/admin-dashboard" element={<div>Admin Dashboard - Coming Soon</div>} /> */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
