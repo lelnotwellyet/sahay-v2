@@ -156,7 +156,68 @@ router.put('/:id/complete', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+// Submit rating and review for completed session
+router.put('/:id/review', async (req, res) => {
+  try {
+    const { rating, review } = req.body;
+    
+    const session = await Session.findById(req.params.id);
 
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    // Check if the logged-in user is the client of this session
+    if (session.clientId.toString() !== req.userId) {
+      return res.status(403).json({ success: false, message: 'Not authorized to review this session' });
+    }
+
+    // Check if session is completed
+    if (session.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Can only review completed sessions' });
+    }
+
+    // Check if rating is valid
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    // Check if already reviewed
+    if (session.rating) {
+      return res.status(400).json({ success: false, message: 'Session already reviewed' });
+    }
+
+    // Update session with rating and review
+    session.rating = rating;
+    session.review = review || '';
+    session.updatedAt = Date.now();
+    
+    await session.save();
+
+    // Update counsellor's average rating and total reviews
+    const counsellor = await Counsellor.findOne({ userId: session.counsellorId });
+    
+    if (counsellor) {
+      // Calculate new average rating
+      const totalRatingSum = (counsellor.averageRating * counsellor.totalReviews) + rating;
+      const newTotalReviews = counsellor.totalReviews + 1;
+      const newAverageRating = totalRatingSum / newTotalReviews;
+
+      counsellor.averageRating = Math.round(newAverageRating * 10) / 10; // Round to 1 decimal
+      counsellor.totalReviews = newTotalReviews;
+      await counsellor.save();
+    }
+
+    res.json({
+      success: true,
+      message: 'Rating and review submitted successfully',
+      session
+    });
+  } catch (error) {
+    console.error('Error submitting review:', error);
+    res.status(500).json({ success: false, message: 'Server error while submitting review' });
+  }
+});
 // Cancel session
 router.put('/:id/cancel', async (req, res) => {
   try {
@@ -173,10 +234,15 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to cancel this session' });
     }
 
+    // Only allow cancellation of pending or accepted sessions
     if (!['pending', 'accepted'].includes(session.status)) {
-      return res.status(400).json({ success: false, message: 'Session cannot be cancelled at this stage' });
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Session cannot be cancelled at this stage' 
+      });
     }
 
+    // Update session status to cancelled
     session.status = 'cancelled';
     session.updatedAt = Date.now();
     await session.save();
@@ -188,7 +254,10 @@ router.put('/:id/cancel', async (req, res) => {
     });
   } catch (error) {
     console.error('Error cancelling session:', error);
-    res.status(500).json({ success: false, message: 'Server error while cancelling session' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while cancelling session' 
+    });
   }
 });
 

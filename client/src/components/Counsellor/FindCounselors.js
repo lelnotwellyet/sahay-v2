@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { mockCounselors, specialties } from '../../utils/mockData';
+import { specialties } from '../../utils/mockData';
 import { counsellorService } from '../../services/api';
 import CounselorCard from './CounselorCard';
 import BookingModal from '../Booking/BookingModal';
@@ -25,7 +25,7 @@ const FindCounselors = () => {
 
   // Load counselors from API
   useEffect(() => {
-    loadCounselors();
+    loadCounselors(); // THIS WAS MISSING!
   }, []);
 
   const loadCounselors = async () => {
@@ -35,12 +35,16 @@ const FindCounselors = () => {
       if (response.data.success) {
         setCounselors(response.data.data);
         setFilteredCounselors(response.data.data);
+      } else {
+        console.error('API returned success: false', response.data);
+        alert('Failed to load counselors. Please try again.');
       }
     } catch (error) {
       console.error('Failed to load counselors:', error);
-      // Fallback to mock data
-      setCounselors(mockCounselors);
-      setFilteredCounselors(mockCounselors);
+      alert('Failed to load counselors. Please check your connection and try again.');
+      // Don't fall back to mock data - keep empty array
+      setCounselors([]);
+      setFilteredCounselors([]);
     } finally {
       setLoading(false);
     }

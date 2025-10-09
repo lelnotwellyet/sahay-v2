@@ -7,90 +7,75 @@ const CounsellorSessions = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
+    console.log('🚀 Component mounted - loading sessions');
     loadSessions();
   }, []);
 
   const loadSessions = async () => {
     try {
+      console.log('📡 Making API call to get counsellor sessions...');
       const response = await sessionService.getCounsellorSessions();
-      if (response.data.success) {
-        setSessions(response.data.sessions);
+      console.log('📦 RAW API RESPONSE:', response);
+      console.log('📊 Response data:', response.data);
+      
+      if (response.data && response.data.success) {
+        console.log('✅ API Success - Sessions:', response.data.sessions);
+        setSessions(response.data.sessions || []);
+        
+        // SUPER DEBUG: Check each session
+        if (response.data.sessions && response.data.sessions.length > 0) {
+          response.data.sessions.forEach((session, index) => {
+            console.log(`🔍 SESSION ${index + 1}:`, {
+              id: session._id,
+              clientName: session.clientName,
+              status: session.status,
+              statusType: typeof session.status,
+              statusLength: session.status ? session.status.length : 0,
+              statusCharCodes: session.status ? Array.from(session.status).map(c => c.charCodeAt(0)) : [],
+              rawSession: session
+            });
+          });
+        } else {
+          console.log('❌ No sessions array in response');
+        }
+      } else {
+        console.error('❌ API returned success: false', response.data);
       }
     } catch (error) {
-      console.error('Error loading sessions:', error);
-      alert('Failed to load sessions');
+      console.error('💥 ERROR loading sessions:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
- const handleAcceptSession = async (sessionId) => {
-  try {
-    const response = await sessionService.accept(sessionId);
-    if (response.data.success) {
-      alert('Session accepted successfully! The client has been notified and can now join the video call.');
-      loadSessions(); // Refresh the list to show updated status
-    }
-  } catch (error) {
-    console.error('Error accepting session:', error);
-    alert('Failed to accept session');
-  }
-};
-
-  const handleRejectSession = async (sessionId) => {
-    try {
-      const response = await sessionService.reject(sessionId);
-      if (response.data.success) {
-        alert('Session rejected');
-        loadSessions(); // Refresh the list
-      }
-    } catch (error) {
-      console.error('Error rejecting session:', error);
-      alert('Failed to reject session');
+      console.log('🏁 Loading completed');
     }
   };
 
   const handleCompleteSession = async (sessionId) => {
     try {
+      console.log('🔄 Attempting to complete session:', sessionId);
       const response = await sessionService.complete(sessionId);
+      console.log('✅ Complete response:', response);
+      
       if (response.data.success) {
-        alert('Session marked as completed');
-        loadSessions(); // Refresh the list
+        alert('Session marked as completed!');
+        loadSessions();
       }
     } catch (error) {
-      console.error('Error completing session:', error);
-      alert('Failed to complete session');
+      console.error('❌ Error completing session:', error);
+      alert('Failed to complete session: ' + (error.response?.data?.message || error.message));
     }
   };
 
-  const handleStartSession = (session) => {
-    if (session.meetingLink) {
-      window.open(session.meetingLink, '_blank');
+  const handleStartSession = (meetingLink) => {
+    if (meetingLink) {
+      window.open(meetingLink, '_blank');
     } else {
-      alert('No meeting link available. Please accept the session first.');
+      alert('No meeting link available.');
     }
   };
-
-  const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { text: 'Pending', class: 'pending' },
-      accepted: { text: 'Confirmed', class: 'confirmed' },
-      completed: { text: 'Completed', class: 'completed' },
-      rejected: { text: 'Rejected', class: 'rejected' },
-      cancelled: { text: 'Cancelled', class: 'cancelled' }
-    };
-    
-    const config = statusConfig[status] || { text: status, class: 'pending' };
-    return <span className={`status-badge ${config.class}`}>{config.text}</span>;
-  };
-
-  const filteredSessions = sessions.filter(session => {
-    if (activeFilter === 'all') return true;
-    return session.status === activeFilter;
-  });
 
   if (loading) {
     return (
@@ -108,143 +93,151 @@ const CounsellorSessions = () => {
         <button className="back-button" onClick={() => navigate('/counsellor-dashboard')}>
           ← Back to Dashboard
         </button>
-        <h1>Session Management</h1>
-        <p>Manage and conduct your counseling sessions</p>
+        <h1>My Sessions - DEBUG MODE</h1>
+        <p>Total sessions: {sessions.length}</p>
+        
+        {/* SUPER DEBUG PANEL */}
+        <div style={{
+          background: '#ffebee', 
+          border: '2px solid #f44336',
+          borderRadius: '8px',
+          padding: '15px',
+          marginTop: '15px',
+          fontSize: '14px',
+          fontFamily: 'monospace'
+        }}>
+          <strong>🔴 SUPER DEBUG PANEL</strong> 
+          <div><strong>Session Count:</strong> {sessions.length}</div>
+          <div><strong>Session Statuses Found:</strong> {[...new Set(sessions.map(s => s.status))].join(', ')}</div>
+          <button 
+            onClick={loadSessions}
+            style={{
+              marginTop: '10px',
+              padding: '8px 16px',
+              background: '#f44336',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            🔄 RELOAD & DEBUG
+          </button>
+        </div>
       </header>
 
-      {/* Filter Tabs */}
-      <div className="filter-tabs">
-        <button 
-          className={activeFilter === 'all' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setActiveFilter('all')}
-        >
-          All Sessions ({sessions.length})
-        </button>
-        <button 
-          className={activeFilter === 'pending' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setActiveFilter('pending')}
-        >
-          Pending ({sessions.filter(s => s.status === 'pending').length})
-        </button>
-        <button 
-          className={activeFilter === 'accepted' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setActiveFilter('accepted')}
-        >
-          Confirmed ({sessions.filter(s => s.status === 'accepted').length})
-        </button>
-        <button 
-          className={activeFilter === 'completed' ? 'filter-tab active' : 'filter-tab'}
-          onClick={() => setActiveFilter('completed')}
-        >
-          Completed ({sessions.filter(s => s.status === 'completed').length})
-        </button>
-      </div>
-
       <div className="sessions-content">
-        {filteredSessions.length > 0 ? (
+        {sessions.length > 0 ? (
           <div className="sessions-list">
-            {filteredSessions.map(session => (
-              <div key={session._id} className="session-card">
-                <div className="session-header">
-                  <div className="client-info">
-                    <h3>{session.clientName}</h3>
-                    <p className="session-datetime">
-                      {new Date(session.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })} at {session.time}
-                    </p>
-                    <div className="session-meta">
-                      <span className="session-type">{session.sessionType} Session</span>
-                      {getStatusBadge(session.status)}
-                      <span className="session-price">${session.price}</span>
+            {sessions.map(session => {
+              // Debug the status for each session
+              const status = session.status;
+              const isAccepted = status === 'accepted';
+              const isPending = status === 'pending';
+              const isCompleted = status === 'completed';
+              const isCancelled = status === 'cancelled';
+              
+              console.log(`🎯 Rendering session ${session._id}:`, {
+                status,
+                isAccepted,
+                isPending,
+                isCompleted,
+                isCancelled
+              });
+
+              return (
+                <div key={session._id} className="session-card">
+                  <div className="session-header">
+                    <div className="client-info">
+                      <h3>{session.clientName}</h3>
+                      <p className="session-date">{session.date} at {session.time}</p>
+                      <div className="session-meta">
+                        <span className={`status-badge ${status}`}>
+                          {status} 
+                          <span style={{marginLeft: '10px', fontSize: '12px', color: '#666'}}>
+                            (isAccepted: {isAccepted.toString()})
+                          </span>
+                        </span>
+                        <span className="session-type">{session.sessionType}</span>
+                        <span className="session-price">${session.price}</span>
+                      </div>
+                      
+                      {/* Session Debug Info */}
+                      <div style={{
+                        fontSize: '11px', 
+                        color: '#666', 
+                        marginTop: '8px',
+                        background: '#f5f5f5',
+                        padding: '5px',
+                        borderRadius: '4px',
+                        border: '1px solid #ddd'
+                      }}>
+                        <div><strong>ID:</strong> {session._id}</div>
+                        <div><strong>Raw Status:</strong> "{status}" (length: {status?.length})</div>
+                        <div><strong>Char Codes:</strong> {status ? Array.from(status).map(c => c.charCodeAt(0)).join(', ') : 'none'}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {session.notes && (
-                  <div className="session-notes">
-                    <strong>Client Notes:</strong> {session.notes}
+                  <div className="session-actions">
+                    {/* Pending Sessions */}
+                    {isPending && (
+                      <div style={{padding: '10px', background: '#fff3cd', borderRadius: '4px'}}>
+                        <strong>PENDING ACTIONS:</strong> Accept/Decline buttons would go here
+                      </div>
+                    )}
+                    
+                    {/* Accepted Sessions - THIS IS WHAT WE WANT TO SEE */}
+                    {isAccepted && (
+                      <div style={{padding: '10px', background: '#d4edda', borderRadius: '4px'}}>
+                        <strong>ACCEPTED ACTIONS:</strong> 
+                        <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                          <button 
+                            className="action-btn primary"
+                            onClick={() => handleStartSession(session.meetingLink)}
+                          >
+                            Start Session
+                          </button>
+                          <button 
+                            className="action-btn success"
+                            onClick={() => handleCompleteSession(session._id)}
+                          >
+                            ✅ Complete Session
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Completed Sessions */}
+                    {isCompleted && (
+                      <div style={{padding: '10px', background: '#e2e3e5', borderRadius: '4px'}}>
+                        <strong>COMPLETED:</strong> No actions available
+                      </div>
+                    )}
+                    
+                    {/* Cancelled Sessions */}
+                    {isCancelled && (
+                      <div style={{padding: '10px', background: '#f8d7da', borderRadius: '4px'}}>
+                        <strong>CANCELLED:</strong> No actions available
+                      </div>
+                    )}
+                    
+                    {/* Unknown Status */}
+                    {!isPending && !isAccepted && !isCompleted && !isCancelled && (
+                      <div style={{padding: '10px', background: '#ffebee', borderRadius: '4px', color: '#d32f2f'}}>
+                        <strong>UNKNOWN STATUS:</strong> "{status}" - No actions defined for this status
+                      </div>
+                    )}
                   </div>
-                )}
-
-                <div className="session-actions">
-                  {session.status === 'pending' && (
-                    <>
-                      <button 
-                        className="action-btn primary"
-                        onClick={() => handleAcceptSession(session._id)}
-                      >
-                        Accept Session
-                      </button>
-                      <button 
-                        className="action-btn danger"
-                        onClick={() => handleRejectSession(session._id)}
-                      >
-                        Decline
-                      </button>
-                    </>
-                  )}
-                  
-                  {session.status === 'accepted' && (
-                    <>
-                      <button 
-                        className="action-btn primary"
-                        onClick={() => handleStartSession(session)}
-                      >
-                        Start Session
-                      </button>
-                      <button 
-                        className="action-btn success"
-                        onClick={() => handleCompleteSession(session._id)}
-                      >
-                        Mark Complete
-                      </button>
-                    </>
-                  )}
-                  
-                  {session.status === 'completed' && (
-                    <div className="completed-actions">
-                      <button className="action-btn secondary">
-                        View Session Notes
-                      </button>
-                      <button className="action-btn secondary">
-                        Add Follow-up
-                      </button>
-                    </div>
-                  )}
                 </div>
-
-                {session.meetingLink && session.status === 'accepted' && (
-                  <div className="meeting-link">
-                    <strong>Meeting Link:</strong> 
-                    <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
-                      {session.meetingLink}
-                    </a>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="no-sessions">
             <h3>No sessions found</h3>
-            <p>
-              {activeFilter === 'all' 
-                ? "You don't have any sessions yet. When clients book sessions, they will appear here."
-                : `No ${activeFilter} sessions found.`
-              }
-            </p>
-            {activeFilter !== 'all' && (
-              <button 
-                className="cta-button"
-                onClick={() => setActiveFilter('all')}
-              >
-                View All Sessions
-              </button>
-            )}
+            <p>You don't have any sessions yet.</p>
           </div>
         )}
       </div>

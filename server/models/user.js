@@ -111,11 +111,16 @@ const counsellorSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  // ADD THESE NEW FIELDS:
-  rating: {
+  // UPDATED RATING FIELDS:
+  averageRating: {
     type: Number,
-    default: 4.5
+    default: 0
   },
+  totalReviews: {
+    type: Number,
+    default: 0
+  },
+  // Keep the existing fields below:
   price: {
     type: Number,
     default: 50

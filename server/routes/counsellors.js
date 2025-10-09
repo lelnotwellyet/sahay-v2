@@ -29,20 +29,24 @@ router.get('/', async (req, res) => {
       .populate('userId', 'email isActive')
       .select('-verificationDocuments');
 
-    // Format the response to match frontend expectations
+    // Format the response to use REAL rating data
     const formattedCounsellors = counsellors.map(counsellor => ({
       id: counsellor._id,
       name: counsellor.fullName,
       specialty: counsellor.specialization?.[0] || 'General Counseling',
       description: counsellor.bio || 'Professional mental health counselor',
-      rating: 4.5,
-      reviews: Math.floor(Math.random() * 50) + 10,
+      // USE REAL RATING DATA INSTEAD OF HARDCODED VALUES:
+      averageRating: counsellor.averageRating || 0,  // Use dynamic averageRating
+      totalReviews: counsellor.totalReviews || 0,    // Use dynamic totalReviews
+      // Keep these for backward compatibility with existing code:
+      rating: counsellor.averageRating || 0,         // Fallback for old code
+      reviews: counsellor.totalReviews || 0,         // Fallback for old code
       experience: counsellor.yearsOfExperience,
-      languages: ['English'],
+      languages: counsellor.languages || ['English'],
       nextAvailable: 'Today',
-      price: 50 + (counsellor.yearsOfExperience * 5),
+      price: counsellor.price || 50,
       available: counsellor.isAvailable,
-      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(counsellor.fullName)}&background=random&size=200`
+      image: counsellor.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(counsellor.fullName)}&background=random&size=200`
     }));
 
     res.json({

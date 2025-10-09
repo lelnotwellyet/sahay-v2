@@ -54,6 +54,18 @@ const sessionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  // NEW FIELDS ADDED FOR RATING AND REVIEW SYSTEM
+  rating: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null
+  },
+  review: {
+    type: String,
+    default: ''
+  },
+  // END OF NEW FIELDS
   createdAt: {
     type: Date,
     default: Date.now

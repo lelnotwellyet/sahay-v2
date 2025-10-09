@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sessionService } from '../../services/api';
+import ReviewModal from './ReviewModal'; // Import the ReviewModal
 import './styles/MySessions.css';
 
 const MySessions = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(null);
 
   // Load sessions initially
   useEffect(() => {
@@ -41,15 +44,46 @@ const MySessions = () => {
     }
   };
 
-  const upcomingSessions = sessions.filter(
-    (session) => session.status === 'pending' || session.status === 'accepted'
-  );
-  const completedSessions = sessions.filter(
-    (session) => session.status === 'completed'
-  );
-  const rejectedSessions = sessions.filter(
-    (session) => session.status === 'rejected' || session.status === 'cancelled'
-  );
+  const handleOpenReviewModal = (session) => {
+    setSelectedSession(session);
+    setReviewModalOpen(true);
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false);
+    setSelectedSession(null);
+  };
+
+  const handleSubmitReview = async (sessionId, rating, review) => {
+    try {
+      const response = await sessionService.review(sessionId, { rating, review });
+      if (response.data.success) {
+        alert('Thank you for your review!');
+        loadSessions(); // Refresh to show the updated session with rating
+        return Promise.resolve();
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert(error.response?.data?.message || 'Failed to submit review');
+      return Promise.reject(error);
+    }
+  };
+
+  // NEW: Handle completing session from client side
+  const handleCompleteSession = async (sessionId) => {
+    if (window.confirm('Mark this session as completed? This will allow you to provide feedback.')) {
+      try {
+        const response = await sessionService.complete(sessionId);
+        if (response.data.success) {
+          alert('Session marked as completed! You can now provide feedback.');
+          loadSessions(); // Refresh the list
+        }
+      } catch (error) {
+        console.error('Error completing session:', error);
+        alert(error.response?.data?.message || 'Failed to complete session');
+      }
+    }
+  };
 
   const handleJoinSession = (session) => {
     if (session.status !== 'accepted') {
@@ -105,6 +139,27 @@ const MySessions = () => {
     return <span className={`status-badge ${config.class}`}>{config.text}</span>;
   };
 
+  // Check if session can be reviewed (completed and not already reviewed)
+  const canReviewSession = (session) => {
+    return session.status === 'completed' && !session.rating;
+  };
+
+  // Check if session has been reviewed
+  const hasBeenReviewed = (session) => {
+    return session.rating && session.rating > 0;
+  };
+
+  
+  const upcomingSessions = sessions.filter(
+    (session) => session.status === 'pending' || session.status === 'accepted'
+  );
+  const completedSessions = sessions.filter(
+    (session) => session.status === 'completed'
+  );
+  const rejectedSessions = sessions.filter(
+    (session) => session.status === 'rejected' || session.status === 'cancelled'
+  );
+
   if (loading) {
     return (
       <div className="my-sessions">
@@ -152,12 +207,21 @@ const MySessions = () => {
 
                   <div className="session-actions">
                     {session.status === 'accepted' && (
-                      <button
-                        className="action-button primary"
-                        onClick={() => handleJoinSession(session)}
-                      >
-                        Join Session
-                      </button>
+                      <>
+                        <button
+                          className="action-button primary"
+                          onClick={() => handleJoinSession(session)}
+                        >
+                          Join Session
+                        </button>
+                        {/* NEW: Complete Session Button for Clients */}
+                        <button
+                          className="action-button success"
+                          onClick={() => handleCompleteSession(session._id)}
+                        >
+                          ✅ Complete Session
+                        </button>
+                      </>
                     )}
                     <button
                       className="action-button danger"
@@ -203,15 +267,40 @@ const MySessions = () => {
                         {session.sessionType} Session
                       </span>
                       {getStatusBadge(session.status)}
+                      
+                      {/* Show rating if reviewed */}
+                      {hasBeenReviewed(session) && (
+                        <div className="session-rating">
+                          <span className="rating-stars">
+                            {'⭐'.repeat(session.rating)}
+                            {'☆'.repeat(5 - session.rating)}
+                          </span>
+                          <span className="rating-text">
+                            Rated {session.rating}/5
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="session-price">${session.price}</div>
                   </div>
 
                   <div className="session-actions">
-                    <button className="action-button secondary">
-                      Rate Session
+                    {canReviewSession(session) && (
+                      <button 
+                        className="action-button success"
+                        onClick={() => handleOpenReviewModal(session)}
+                      >
+                        ⭐ Rate Session
+                      </button>
+                    )}
+                    {hasBeenReviewed(session) && (
+                      <button className="action-button secondary" disabled>
+                        ✅ Reviewed
+                      </button>
+                    )}
+                    <button className="action-button primary">
+                      Book Again
                     </button>
-                    <button className="action-button primary">Book Again</button>
                   </div>
                 </div>
               ))}
@@ -249,6 +338,14 @@ const MySessions = () => {
           </section>
         )}
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={handleCloseReviewModal}
+        session={selectedSession}
+        onSubmit={handleSubmitReview}
+      />
     </div>
   );
 };

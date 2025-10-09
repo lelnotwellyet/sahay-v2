@@ -305,3 +305,35 @@
 .action-button.danger:hover {
   background-color: #c82333;
 }
+/* Rating Styles */
+.session-rating {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rating-stars {
+  font-size: 16px;
+}
+
+.rating-text {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.action-button.success {
+  background: #28a745;
+  color: white;
+}
+
+.action-button.success:hover {
+  background: #218838;
+}
+
+.action-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}

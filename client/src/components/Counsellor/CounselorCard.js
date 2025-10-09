@@ -8,6 +8,13 @@ const CounselorCard = ({ counselor, onBook }) => {
     }
   };
 
+  // Use dynamic rating data if available, otherwise fall back to static data
+  const displayRating = counselor.averageRating !== undefined ? counselor.averageRating : counselor.rating;
+  const displayReviews = counselor.totalReviews !== undefined ? counselor.totalReviews : counselor.reviews;
+  
+  // Format rating to 1 decimal place if it's a dynamic rating
+  const formattedRating = counselor.averageRating !== undefined ? displayRating.toFixed(1) : displayRating;
+
   return (
     <div className={`counselor-card ${!counselor.available ? 'unavailable' : ''}`}>
       <div className="counselor-header">
@@ -16,8 +23,8 @@ const CounselorCard = ({ counselor, onBook }) => {
           <h3 className="counselor-name">{counselor.name}</h3>
           <p className="counselor-specialty">{counselor.specialty}</p>
           <div className="rating">
-            <span className="stars">⭐ {counselor.rating}</span>
-            <span className="reviews">({counselor.reviews} reviews)</span>
+            <span className="stars">⭐ {formattedRating}</span>
+            <span className="reviews">({displayReviews} reviews)</span>
           </div>
         </div>
         <div className="availability-badge">

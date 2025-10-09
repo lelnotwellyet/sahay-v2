@@ -64,6 +64,7 @@ export const sessionService = {
   reject: (id) => api.put(`/sessions/${id}/reject`),
   complete: (id) => api.put(`/sessions/${id}/complete`),
   cancel: (id) => api.put(`/sessions/${id}/cancel`), 
+   review: (id, data) => api.put(`/sessions/${id}/review`, data),
 };
 
 export default api;
