@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { sessionService } from '../../services/api';
-import SessionRequest from '../Counsellor/SessionRequest';
 import './styles/CounsellorDashboard.css';
 
 const CounsellorDashboard = () => {
@@ -18,10 +17,6 @@ const CounsellorDashboard = () => {
     averageRating: 4.8,
     earnings: 0
   });
-
-  useEffect(() => {
-    loadSessions();
-  }, []);
 
   const loadSessions = async () => {
     try {
@@ -53,6 +48,10 @@ const CounsellorDashboard = () => {
       earnings: earnings
     });
   };
+
+  useEffect(() => {
+    loadSessions();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLogout = () => {
     logout();
