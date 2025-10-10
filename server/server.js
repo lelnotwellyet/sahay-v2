@@ -1,8 +1,27 @@
 const express = require('express');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+const { GoogleGenAI } = require('@google/genai');
+
+// --- START: Gemini Client Initialization ---
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+// Initialize to null. 
+let ai = null; 
+
+// Check if the key exists and starts with the expected prefix before initializing.
+if (geminiApiKey && geminiApiKey.startsWith("AIzaSy")) {
+    ai = new GoogleGenAI({ apiKey: geminiApiKey });
+    console.log("✅ Gemini AI Client initialized.");
+} else {
+    // If initialization fails (due to a missing key), log the failure gracefully
+    // This serves as the only failure message, replacing the confusing double output.
+    console.warn("⚠️ WARNING: GEMINI_API_KEY is missing or invalid. AI features will be disabled.");
+}
+// --- END: Gemini Client Initialization ---
+
 
 const app = express();
 
@@ -34,10 +53,23 @@ const authMiddleware = (req, res, next) => {
 };
 
 // Routes
+// NOTE: Assuming original routing prefixes /api/ROUTE are correct as per your working project.
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/counsellors', require('./routes/counsellors'));
 app.use('/api/sessions', authMiddleware, require('./routes/sessions'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
+
+// Route now handles AI service injection/check
+app.use('/api/gemini', authMiddleware, (req, res, next) => {
+    // Inject the AI client instance into the request object
+    req.ai = ai;
+    if (!req.ai) {
+        // Blocks requests if the key was invalid during initialization
+        return res.status(503).json({ success: false, message: 'AI service is disabled due to missing API key.' });
+    }
+    next();
+}, require('./routes/gemini'));
+
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -59,6 +91,7 @@ app.get('/', (req, res) => {
 // Database connection with better error handling
 const connectDB = async () => {
   try {
+    // Use the MONGODB_URI directly from process.env
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB Atlas connected successfully');
   } catch (error) {

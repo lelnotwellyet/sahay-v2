@@ -64,7 +64,14 @@ export const sessionService = {
   reject: (id) => api.put(`/sessions/${id}/reject`),
   complete: (id) => api.put(`/sessions/${id}/complete`),
   cancel: (id) => api.put(`/sessions/${id}/cancel`), 
-   review: (id, data) => api.put(`/sessions/${id}/review`, data),
+  review: (id, data) => api.put(`/sessions/${id}/review`, data),
 };
+
+// START: NEW GEMINI SERVICE
+export const geminiService = {
+  // This points to the new backend route /api/gemini/chat
+  sendMessage: (message, history) => api.post('/gemini/chat', { message, chatHistory: history }),
+};
+// END: NEW GEMINI SERVICE
 
 export default api;

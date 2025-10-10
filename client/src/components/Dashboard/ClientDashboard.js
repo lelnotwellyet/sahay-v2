@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import GeminiChat from '../Common/GeminiChat';
 import './styles/ClientDashboard.css';
 
 const ClientDashboard = () => {
@@ -34,6 +35,11 @@ const ClientDashboard = () => {
       </header>
       
       <div className="dashboard-content">
+       {/* START: Gemini Chatbot in a dedicated column */}
+        <div style={{flex: '0 0 400px'}}>
+            <GeminiChat />
+        </div>
+        {/* END: Gemini Chatbot */}
         <div className="quick-actions">
           <h2>Quick Actions</h2>
           <div className="action-cards">
