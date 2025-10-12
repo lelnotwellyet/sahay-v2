@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { sessionService } from '../../services/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { sessionService, availabilityService } from '../../services/api';
 import './styles/BookingModal.css';
 
 const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
@@ -8,18 +8,11 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
   const [sessionType, setSessionType] = useState('video');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
-  if (!isOpen) return null;
-
-  // Generate time slots (9 AM to 6 PM)
-  const timeSlots = [];
-  for (let hour = 9; hour <= 18; hour++) {
-    timeSlots.push(`${hour}:00`);
-    if (hour < 18) timeSlots.push(`${hour}:30`);
-  }
-
-  // Generate next 7 days for date selection
-  const getNextDays = () => {
+  // Generate next 7 days for date selection - memoized
+  const getNextDays = useCallback(() => {
     const days = [];
     const today = new Date();
     for (let i = 0; i < 7; i++) {
@@ -28,12 +21,50 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
       days.push(date.toISOString().split('T')[0]);
     }
     return days;
+  }, []);
+
+  // Load available slots when date changes
+  const loadAvailableSlots = useCallback(async () => {
+    if (!selectedDate || !isOpen) return;
+    
+    setLoadingSlots(true);
+    try {
+      const response = await availabilityService.getAvailableSlots(counselor.id, selectedDate);
+      if (response.data.success) {
+        setAvailableSlots(response.data.availableSlots || []);
+      }
+    } catch (error) {
+      console.error('Error loading available slots:', error);
+      setAvailableSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, [selectedDate, isOpen, counselor.id]);
+
+  useEffect(() => {
+    loadAvailableSlots();
+  }, [loadAvailableSlots]);
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setSelectedTime(''); // Reset time when date changes
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedDate || !selectedTime) {
       alert('Please select both date and time');
+      return;
+    }
+
+    // Check if the selected slot is still available
+    const isSlotAvailable = availableSlots.some(slot => 
+      slot.startTime === selectedTime
+    );
+
+    if (!isSlotAvailable) {
+      alert('This time slot is no longer available. Please select another time.');
+      await loadAvailableSlots(); // Refresh available slots
       return;
     }
 
@@ -58,7 +89,14 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
       }
     } catch (error) {
       console.error('Booking error:', error);
-      alert(error.response?.data?.message || 'Failed to book session. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Failed to book session. Please try again.';
+      
+      if (errorMessage.includes('already booked') || errorMessage.includes('not available')) {
+        // Refresh available slots if there's a conflict
+        await loadAvailableSlots();
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -69,6 +107,13 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
       onClose();
     }
   };
+
+  const getDayName = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
@@ -84,6 +129,11 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
             <h3>{counselor.name}</h3>
             <p>{counselor.specialty}</p>
             <div className="price">${counselor.price}/session</div>
+            {!counselor.available && (
+              <div className="availability-warning">
+                ⚠️ Currently unavailable for bookings
+              </div>
+            )}
           </div>
         </div>
 
@@ -116,9 +166,10 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
             <label>Select Date</label>
             <select
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateChange(e.target.value)}
               className="form-select"
               required
+              disabled={!counselor.available}
             >
               <option value="">Choose a date</option>
               {getNextDays().map(date => (
@@ -135,19 +186,33 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
 
           <div className="form-group">
             <label>Select Time</label>
-            <select
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              className="form-select"
-              required
-            >
-              <option value="">Choose a time</option>
-              {timeSlots.map(time => (
-                <option key={time} value={time}>
-                  {time}
-                </option>
-              ))}
-            </select>
+            {!selectedDate ? (
+              <div className="time-placeholder">
+                Please select a date first
+              </div>
+            ) : loadingSlots ? (
+              <div className="time-placeholder">
+                Loading available time slots...
+              </div>
+            ) : availableSlots.length === 0 ? (
+              <div className="time-placeholder no-slots">
+                No available time slots for {getDayName(selectedDate)}
+              </div>
+            ) : (
+              <select
+                value={selectedTime}
+                onChange={(e) => setSelectedTime(e.target.value)}
+                className="form-select"
+                required
+              >
+                <option value="">Choose a time</option>
+                {availableSlots.map(slot => (
+                  <option key={slot.startTime} value={slot.startTime}>
+                    {slot.display || `${slot.startTime} - ${slot.endTime}`}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="form-group">
@@ -158,6 +223,7 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
               placeholder="Any specific concerns or topics you'd like to discuss..."
               className="form-textarea"
               rows="3"
+              disabled={!counselor.available}
             />
           </div>
 
@@ -176,8 +242,12 @@ const BookingModal = ({ counselor, isOpen, onClose, onConfirm }) => {
             <button type="button" className="cancel-button" onClick={onClose} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" className="confirm-button" disabled={loading}>
-              {loading ? 'Booking...' : 'Book Session'}
+            <button 
+              type="submit" 
+              className="confirm-button" 
+              disabled={loading || !counselor.available}
+            >
+              {loading ? 'Booking...' : counselor.available ? 'Book Session' : 'Not Available'}
             </button>
           </div>
         </form>

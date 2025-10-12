@@ -423,3 +423,65 @@
 .cta-button:hover {
   background: #2980b9;
 }
+/* Add these styles to your existing CounsellorDashboard.css */
+
+.availability-toggle-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  border-left: 4px solid #4CAF50;
+}
+
+.toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.availability-status {
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.availability-status.available {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.availability-status.unavailable {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.toggle-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.toggle-btn.available {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.toggle-btn.available:hover {
+  background-color: #45a049;
+}
+
+.toggle-btn.unavailable {
+  background-color: #f44336;
+  color: white;
+}
+
+.toggle-btn.unavailable:hover {
+  background-color: #da190b;
+}

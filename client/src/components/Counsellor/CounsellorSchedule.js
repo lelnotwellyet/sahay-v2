@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { availabilityService } from '../../services/api';
 import './styles/CounsellorSchedule.css';
 
 const CounsellorSchedule = () => {
   const navigate = useNavigate();
   const [activeDay, setActiveDay] = useState('monday');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const days = [
+  // Memoize the days array to prevent unnecessary recreations
+  const days = useMemo(() => [
     { id: 'monday', name: 'Monday' },
     { id: 'tuesday', name: 'Tuesday' },
     { id: 'wednesday', name: 'Wednesday' },
@@ -14,22 +18,67 @@ const CounsellorSchedule = () => {
     { id: 'friday', name: 'Friday' },
     { id: 'saturday', name: 'Saturday' },
     { id: 'sunday', name: 'Sunday' }
-  ];
+  ], []);
 
-  const timeSlots = [
-    '09:00 - 10:00', '10:00 - 11:00', '11:00 - 12:00', 
-    '14:00 - 15:00', '15:00 - 16:00', '16:00 - 17:00'
-  ];
+  // Memoize the timeSlots array to prevent unnecessary recreations
+  const timeSlots = useMemo(() => [
+    { startTime: '09:00', endTime: '10:00', display: '09:00 - 10:00' },
+    { startTime: '10:00', endTime: '11:00', display: '10:00 - 11:00' },
+    { startTime: '11:00', endTime: '12:00', display: '11:00 - 12:00' },
+    { startTime: '14:00', endTime: '15:00', display: '14:00 - 15:00' },
+    { startTime: '15:00', endTime: '16:00', display: '15:00 - 16:00' },
+    { startTime: '16:00', endTime: '17:00', display: '16:00 - 17:00' }
+  ], []);
 
-  const [schedule, setSchedule] = useState({
-    monday: timeSlots.map(time => ({ time, available: true })),
-    tuesday: timeSlots.map(time => ({ time, available: true })),
-    wednesday: timeSlots.map(time => ({ time, available: true })),
-    thursday: timeSlots.map(time => ({ time, available: true })),
-    friday: timeSlots.map(time => ({ time, available: true })),
-    saturday: timeSlots.map(time => ({ time, available: false })),
-    sunday: timeSlots.map(time => ({ time, available: false }))
+  // Initialize schedule state with memoized timeSlots
+  const [schedule, setSchedule] = useState(() => {
+    const initialSchedule = {};
+    days.forEach(day => {
+      initialSchedule[day.id] = timeSlots.map(slot => ({ ...slot, available: false }));
+    });
+    return initialSchedule;
   });
+
+  // Load schedule from backend - properly memoized with useCallback
+  const loadSchedule = useCallback(async () => {
+    try {
+      const response = await availabilityService.getCounsellorSchedule();
+      if (response.data.success) {
+        const backendSchedule = response.data.schedule;
+        
+        // Convert backend format to frontend format
+        const newSchedule = {};
+        
+        days.forEach(day => {
+          newSchedule[day.id] = timeSlots.map(slot => {
+            // Check if this slot exists in backend schedule
+            const backendSlot = backendSchedule.find(bs => 
+              bs.dayOfWeek === day.id && 
+              bs.startTime === slot.startTime && 
+              bs.endTime === slot.endTime
+            );
+            
+            return {
+              ...slot,
+              available: backendSlot ? backendSlot.isAvailable : false
+            };
+          });
+        });
+        
+        setSchedule(newSchedule);
+      }
+    } catch (error) {
+      console.error('Error loading schedule:', error);
+      alert('Failed to load schedule');
+    } finally {
+      setLoading(false);
+    }
+  }, [days, timeSlots]); // Now these dependencies are memoized
+
+  // Load schedule on component mount
+  useEffect(() => {
+    loadSchedule();
+  }, [loadSchedule]); // loadSchedule is now stable
 
   const toggleAvailability = (day, timeIndex) => {
     setSchedule(prev => ({
@@ -46,6 +95,44 @@ const CounsellorSchedule = () => {
       [day]: prev[day].map(slot => ({ ...slot, available }))
     }));
   };
+
+  const saveSchedule = async () => {
+    setSaving(true);
+    try {
+      // Convert frontend format to backend format
+      const backendSchedule = [];
+      
+      days.forEach(day => {
+        schedule[day.id].forEach(slot => {
+          backendSchedule.push({
+            dayOfWeek: day.id,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            isAvailable: slot.available
+          });
+        });
+      });
+
+      await availabilityService.updateCounsellorSchedule({ 
+        schedule: backendSchedule 
+      });
+      
+      alert('Schedule saved successfully!');
+    } catch (error) {
+      console.error('Error saving schedule:', error);
+      alert('Failed to save schedule');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="counsellor-schedule">
+        <div className="loading">Loading schedule...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="counsellor-schedule">
@@ -94,7 +181,7 @@ const CounsellorSchedule = () => {
           <div className="time-slots">
             {schedule[activeDay].map((slot, index) => (
               <div key={index} className={`time-slot ${slot.available ? 'available' : 'unavailable'}`}>
-                <span className="slot-time">{slot.time}</span>
+                <span className="slot-time">{slot.display}</span>
                 <button 
                   className={`toggle-btn ${slot.available ? 'available' : 'unavailable'}`}
                   onClick={() => toggleAvailability(activeDay, index)}
@@ -120,6 +207,14 @@ const CounsellorSchedule = () => {
               );
             })}
           </div>
+          
+          <button 
+            className="save-schedule-btn"
+            onClick={saveSchedule}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save Schedule'}
+          </button>
         </div>
       </div>
     </div>

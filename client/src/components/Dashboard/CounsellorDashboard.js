@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { sessionService } from '../../services/api';
+import { sessionService, availabilityService } from '../../services/api';
 import './styles/CounsellorDashboard.css';
 
 const CounsellorDashboard = () => {
@@ -10,6 +10,7 @@ const CounsellorDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAvailable, setIsAvailable] = useState(false);
   const [sessionStats, setSessionStats] = useState({
     totalSessions: 0,
     completedSessions: 0,
@@ -32,6 +33,17 @@ const CounsellorDashboard = () => {
     }
   };
 
+  const loadAvailability = async () => {
+    try {
+      const response = await availabilityService.getCounsellorSchedule();
+      if (response.data.success) {
+        setIsAvailable(response.data.isAvailable);
+      }
+    } catch (error) {
+      console.error('Error loading availability:', error);
+    }
+  };
+
   const calculateStats = (sessions) => {
     const total = sessions.length;
     const completed = sessions.filter(s => s.status === 'completed').length;
@@ -51,7 +63,22 @@ const CounsellorDashboard = () => {
 
   useEffect(() => {
     loadSessions();
+    loadAvailability();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleToggleAvailability = async () => {
+    try {
+      const newAvailability = !isAvailable;
+      await availabilityService.updateCounsellorSchedule({ 
+        isAvailable: newAvailability 
+      });
+      setIsAvailable(newAvailability);
+      alert(`You are now ${newAvailability ? 'available' : 'unavailable'} for sessions`);
+    } catch (error) {
+      console.error('Error updating availability:', error);
+      alert('Failed to update availability');
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -166,6 +193,23 @@ const CounsellorDashboard = () => {
               )}
             </div>
 
+            {/* Availability Toggle */}
+            <div className="availability-toggle-card">
+              <div className="toggle-header">
+                <h3>Session Availability</h3>
+                <div className={`availability-status ${isAvailable ? 'available' : 'unavailable'}`}>
+                  {isAvailable ? '🟢 Available' : '🔴 Unavailable'}
+                </div>
+              </div>
+              <p>Toggle your availability for client bookings</p>
+              <button 
+                className={`toggle-btn ${isAvailable ? 'unavailable' : 'available'}`}
+                onClick={handleToggleAvailability}
+              >
+                {isAvailable ? 'Set as Unavailable' : 'Set as Available'}
+              </button>
+            </div>
+
             {/* Stats Cards */}
             <div className="stats-grid">
               <div className="stat-card">
@@ -207,7 +251,7 @@ const CounsellorDashboard = () => {
                     <div key={session._id} className="request-card">
                       <div className="request-info">
                         <h4>{session.clientName}</h4>
-                        <p>{session.date} at {session.time}</p>
+                        <p>{session.date} at {session.startTime}</p>
                         <span className="session-type">{session.sessionType} Session</span>
                       </div>
                       <div className="request-actions">
@@ -264,7 +308,7 @@ const CounsellorDashboard = () => {
                     <div key={session._id} className="session-item">
                       <div className="session-info">
                         <h4>{session.clientName}</h4>
-                        <p>{session.date} at {session.time}</p>
+                        <p>{session.date} at {session.startTime}</p>
                         <span className="session-type">{session.sessionType}</span>
                       </div>
                       <div className="session-actions">
@@ -298,7 +342,7 @@ const CounsellorDashboard = () => {
                     <div className="session-header">
                       <div className="client-info">
                         <h3>{session.clientName}</h3>
-                        <p>{session.date} at {session.time}</p>
+                        <p>{session.date} at {session.startTime}</p>
                         <span className={`status-badge ${session.status}`}>
                           {session.status}
                         </span>

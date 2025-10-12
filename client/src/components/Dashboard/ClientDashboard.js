@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import GeminiChat from '../Common/GeminiChat';
 import './styles/ClientDashboard.css';
+import Chatbot from '../Common/GeminiChat';
 
 const ClientDashboard = () => {
   const navigate = useNavigate();
@@ -35,11 +35,6 @@ const ClientDashboard = () => {
       </header>
       
       <div className="dashboard-content">
-       {/* START: Gemini Chatbot in a dedicated column */}
-        <div style={{flex: '0 0 400px'}}>
-            <GeminiChat />
-        </div>
-        {/* END: Gemini Chatbot */}
         <div className="quick-actions">
           <h2>Quick Actions</h2>
           <div className="action-cards">
@@ -68,6 +63,7 @@ const ClientDashboard = () => {
           </div>
         </div>
       </div>
+      <Chatbot />
     </div>
   );
 };

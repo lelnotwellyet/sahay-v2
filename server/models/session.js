@@ -23,7 +23,11 @@ const sessionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  time: {
+  startTime: {
+    type: String,
+    required: true
+  },
+  endTime: {
     type: String,
     required: true
   },
@@ -54,7 +58,6 @@ const sessionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // NEW FIELDS ADDED FOR RATING AND REVIEW SYSTEM
   rating: {
     type: Number,
     min: 1,
@@ -65,7 +68,6 @@ const sessionSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
-  // END OF NEW FIELDS
   createdAt: {
     type: Date,
     default: Date.now

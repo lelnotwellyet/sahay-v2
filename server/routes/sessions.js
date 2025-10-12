@@ -4,7 +4,7 @@ const { Client, Counsellor } = require('../models/user');
 
 const router = express.Router();
 
-// Create a new session booking
+// Create a new session booking with availability check
 router.post('/book', async (req, res) => {
   try {
     const { counsellorId, date, time, sessionType, notes, price } = req.body;
@@ -21,6 +21,31 @@ router.post('/book', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Counsellor not found' });
     }
 
+    // Check if counsellor is available
+    if (!counsellor.isAvailable) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Counsellor is currently not available for bookings' 
+      });
+    }
+
+    // Check if time slot is already booked
+    const isSlotBooked = counsellor.bookedSlots.some(slot => 
+      slot.date === date && slot.startTime === time
+    );
+
+    if (isSlotBooked) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'This time slot is already booked. Please choose another time.' 
+      });
+    }
+
+    // Calculate end time (1 hour session)
+    const startTime = new Date(`1970-01-01T${time}:00`);
+    const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+    const endTimeString = endTime.toTimeString().slice(0, 5);
+
     // Create session
     const session = new Session({
       clientId: req.userId,
@@ -28,7 +53,8 @@ router.post('/book', async (req, res) => {
       clientName: client.realName || client.anonymousName,
       counsellorName: counsellor.fullName,
       date,
-      time,
+      startTime: time,
+      endTime: endTimeString,
       sessionType,
       notes,
       price,
@@ -37,6 +63,16 @@ router.post('/book', async (req, res) => {
     });
 
     await session.save();
+
+    // Add to counsellor's booked slots
+    counsellor.bookedSlots.push({
+      date: date,
+      startTime: time,
+      endTime: endTimeString,
+      sessionId: session._id
+    });
+
+    await counsellor.save();
 
     res.status(201).json({
       success: true,
@@ -109,18 +145,27 @@ router.put('/:id/accept', async (req, res) => {
   }
 });
 
-// Reject session request
+// Reject session request - Also remove from booked slots
 router.put('/:id/reject', async (req, res) => {
   try {
-    const session = await Session.findByIdAndUpdate(
-      req.params.id,
-      { status: 'rejected' },
-      { new: true }
-    );
-
+    const session = await Session.findById(req.params.id);
+    
     if (!session) {
       return res.status(404).json({ success: false, message: 'Session not found' });
     }
+
+    // Remove from counsellor's booked slots
+    const counsellor = await Counsellor.findOne({ userId: session.counsellorId });
+    if (counsellor) {
+      counsellor.bookedSlots = counsellor.bookedSlots.filter(
+        slot => slot.sessionId.toString() !== session._id.toString()
+      );
+      await counsellor.save();
+    }
+
+    session.status = 'rejected';
+    session.updatedAt = Date.now();
+    await session.save();
 
     res.json({
       success: true,
@@ -156,6 +201,7 @@ router.put('/:id/complete', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+
 // Submit rating and review for completed session
 router.put('/:id/review', async (req, res) => {
   try {
@@ -218,7 +264,8 @@ router.put('/:id/review', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error while submitting review' });
   }
 });
-// Cancel session
+
+// Cancel session - Also remove from booked slots
 router.put('/:id/cancel', async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -240,6 +287,15 @@ router.put('/:id/cancel', async (req, res) => {
         success: false, 
         message: 'Session cannot be cancelled at this stage' 
       });
+    }
+
+    // Remove from counsellor's booked slots
+    const counsellor = await Counsellor.findOne({ userId: session.counsellorId });
+    if (counsellor) {
+      counsellor.bookedSlots = counsellor.bookedSlots.filter(
+        slot => slot.sessionId.toString() !== session._id.toString()
+      );
+      await counsellor.save();
     }
 
     // Update session status to cancelled

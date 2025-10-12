@@ -253,3 +253,40 @@
     flex-direction: column;
   }
 }
+/* Add these styles to your existing BookingModal.css */
+
+.availability-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-top: 8px;
+  border: 1px solid #ffeaa7;
+}
+
+.time-placeholder {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.time-placeholder.no-slots {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+.form-select:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.form-textarea:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}

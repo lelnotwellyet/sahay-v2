@@ -27,7 +27,6 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  // Replace email verification token with OTP
   otp: String,
   otpExpires: Date,
   createdAt: {
@@ -35,6 +34,28 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// Availability slot schema
+const availabilitySlotSchema = new mongoose.Schema({
+  dayOfWeek: {
+    type: String,
+    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+    required: true
+  },
+  startTime: {
+    type: String,
+    required: true
+  },
+  endTime: {
+    type: String,
+    required: true
+  },
+  isAvailable: {
+    type: Boolean,
+    default: true
+  }
+});
+
 // Client-specific schema
 const clientSchema = new mongoose.Schema({
   userId: {
@@ -55,7 +76,6 @@ const clientSchema = new mongoose.Schema({
   dateOfBirth: {
     type: Date
   },
-  // Client can choose to reveal real name or not
   realName: {
     type: String,
     trim: true
@@ -111,7 +131,6 @@ const counsellorSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
-  // UPDATED RATING FIELDS:
   averageRating: {
     type: Number,
     default: 0
@@ -120,7 +139,6 @@ const counsellorSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  // Keep the existing fields below:
   price: {
     type: Number,
     default: 50
@@ -132,9 +150,20 @@ const counsellorSchema = new mongoose.Schema({
   image: {
     type: String,
     default: ''
-  }
+  },
+  // NEW: Availability schedule
+  availability: [availabilitySlotSchema],
+  // NEW: Booked slots to prevent double booking
+  bookedSlots: [{
+    date: String,
+    startTime: String,
+    endTime: String,
+    sessionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Session'
+    }
+  }]
 });
-
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

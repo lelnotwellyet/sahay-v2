@@ -54,6 +54,12 @@ export const counsellorService = {
 
 export const availabilityService = {
   updateAvailability: (isAvailable) => api.put('/counsellors/availability', { isAvailable }),
+  // NEW: Availability schedule endpoints
+  getCounsellorSchedule: () => api.get('/availability/counsellor/schedule'),
+  updateCounsellorSchedule: (data) => api.put('/availability/counsellor/schedule', data),
+  getAvailableSlots: (counsellorId, date) => api.get(`/availability/counsellor/${counsellorId}/available-slots?date=${date}`),
+  checkSlotAvailability: (counsellorId, date, startTime, endTime) => 
+    api.get(`/availability/counsellor/${counsellorId}/check-slot?date=${date}&startTime=${startTime}&endTime=${endTime}`),
 };
 
 export const sessionService = {
