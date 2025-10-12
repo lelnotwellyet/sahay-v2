@@ -117,6 +117,41 @@ router.get('/client', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+// Add this route to your existing sessions.js file - place it with the other GET routes
+
+// Get reviews for counsellor
+router.get('/counsellor/reviews', async (req, res) => {
+  try {
+    const sessions = await Session.find({ 
+      counsellorId: req.userId,
+      rating: { $exists: true, $ne: null } // Only sessions with ratings
+    })
+    .sort({ createdAt: -1 });
+
+    // Format the response with review data
+    const reviews = sessions.map(session => ({
+      id: session._id,
+      clientName: session.clientName,
+      date: session.date,
+      time: session.startTime,
+      rating: session.rating,
+      review: session.review,
+      sessionType: session.sessionType,
+      createdAt: session.createdAt
+    }));
+
+    res.json({
+      success: true,
+      reviews: reviews
+    });
+  } catch (error) {
+    console.error('Error fetching counsellor reviews:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error while fetching reviews' 
+    });
+  }
+});
 
 // Accept session request
 router.put('/:id/accept', async (req, res) => {
@@ -316,5 +351,6 @@ router.put('/:id/cancel', async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

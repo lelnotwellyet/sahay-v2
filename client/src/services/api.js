@@ -66,6 +66,8 @@ export const sessionService = {
   book: (data) => api.post('/sessions/book', data),
   getCounsellorSessions: () => api.get('/sessions/counsellor'),
   getClientSessions: () => api.get('/sessions/client'),
+  // NEW: Get counselor reviews
+  getCounsellorReviews: () => api.get('/sessions/counsellor/reviews'),
   accept: (id) => api.put(`/sessions/${id}/accept`),
   reject: (id) => api.put(`/sessions/${id}/reject`),
   complete: (id) => api.put(`/sessions/${id}/complete`),

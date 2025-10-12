@@ -9,13 +9,16 @@ const CounsellorDashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [sessions, setSessions] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingReviews, setLoadingReviews] = useState(false);
   const [isAvailable, setIsAvailable] = useState(false);
   const [sessionStats, setSessionStats] = useState({
     totalSessions: 0,
     completedSessions: 0,
     upcomingSessions: 0,
-    averageRating: 4.8,
+    averageRating: 0,
+    totalReviews: 0,
     earnings: 0
   });
 
@@ -30,6 +33,20 @@ const CounsellorDashboard = () => {
       console.error('Error loading sessions:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadReviews = async () => {
+    setLoadingReviews(true);
+    try {
+      const response = await sessionService.getCounsellorReviews();
+      if (response.data.success) {
+        setReviews(response.data.reviews);
+      }
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    } finally {
+      setLoadingReviews(false);
     }
   };
 
@@ -52,11 +69,19 @@ const CounsellorDashboard = () => {
       .filter(s => s.status === 'completed')
       .reduce((sum, session) => sum + session.price, 0);
 
+    // Calculate real average rating and total reviews
+    const ratedSessions = sessions.filter(s => s.rating && s.rating > 0);
+    const totalReviews = ratedSessions.length;
+    const averageRating = totalReviews > 0 
+      ? (ratedSessions.reduce((sum, session) => sum + session.rating, 0) / totalReviews).toFixed(1)
+      : 0;
+
     setSessionStats({
       totalSessions: total,
       completedSessions: completed,
       upcomingSessions: upcoming,
-      averageRating: 4.8,
+      averageRating: averageRating,
+      totalReviews: totalReviews,
       earnings: earnings
     });
   };
@@ -65,6 +90,13 @@ const CounsellorDashboard = () => {
     loadSessions();
     loadAvailability();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load reviews when reviews tab is active
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      loadReviews();
+    }
+  }, [activeTab]);
 
   const handleToggleAvailability = async () => {
     try {
@@ -125,6 +157,14 @@ const CounsellorDashboard = () => {
     return user?.username || 'Counsellor';
   };
 
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, index) => (
+      <span key={index} className={index < rating ? 'star filled' : 'star'}>
+        {index < rating ? '⭐' : '☆'}
+      </span>
+    ));
+  };
+
   const upcomingSessions = sessions.filter(session => 
     session.status === 'accepted'
   );
@@ -163,6 +203,12 @@ const CounsellorDashboard = () => {
           onClick={() => setActiveTab('sessions')}
         >
           📅 My Sessions
+        </button>
+        <button 
+          className={activeTab === 'reviews' ? 'nav-btn active' : 'nav-btn'}
+          onClick={() => setActiveTab('reviews')}
+        >
+          ⭐ Reviews
         </button>
         <button 
           className={activeTab === 'clients' ? 'nav-btn active' : 'nav-btn'}
@@ -224,6 +270,7 @@ const CounsellorDashboard = () => {
                 <div className="stat-info">
                   <h3>{sessionStats.averageRating}</h3>
                   <p>Average Rating</p>
+                  <small>{sessionStats.totalReviews} reviews</small>
                 </div>
               </div>
               <div className="stat-card">
@@ -287,9 +334,9 @@ const CounsellorDashboard = () => {
                   <h3>📝 Session Notes</h3>
                   <p>Review and update client session notes</p>
                 </div>
-                <div className="action-card">
-                  <h3>💳 Earnings</h3>
-                  <p>View your payments and earnings history</p>
+                <div className="action-card" onClick={() => setActiveTab('reviews')}>
+                  <h3>⭐ View Reviews</h3>
+                  <p>See what clients are saying about you</p>
                 </div>
               </div>
             </div>
@@ -351,6 +398,9 @@ const CounsellorDashboard = () => {
                         <p><strong>Type:</strong> {session.sessionType}</p>
                         <p><strong>Price:</strong> ${session.price}</p>
                         {session.notes && <p><strong>Notes:</strong> {session.notes}</p>}
+                        {session.rating && (
+                          <p><strong>Rating:</strong> {renderStars(session.rating)} ({session.rating}/5)</p>
+                        )}
                       </div>
                     </div>
                     <div className="session-actions">
@@ -388,6 +438,60 @@ const CounsellorDashboard = () => {
               <div className="no-sessions">
                 <p>No sessions found.</p>
                 <p>When clients book sessions, they will appear here.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === 'reviews' && (
+          <div className="reviews-section">
+            <h2>Client Reviews</h2>
+            {loadingReviews ? (
+              <div className="loading">Loading reviews...</div>
+            ) : reviews.length > 0 ? (
+              <div className="reviews-list">
+                <div className="reviews-stats">
+                  <div className="overall-rating">
+                    <h3>Overall Rating: {sessionStats.averageRating}/5</h3>
+                    <div className="stars-large">
+                      {renderStars(parseFloat(sessionStats.averageRating))}
+                    </div>
+                    <p>Based on {sessionStats.totalReviews} reviews</p>
+                  </div>
+                </div>
+                {reviews.map(review => (
+                  <div key={review.id} className="review-card">
+                    <div className="review-header">
+                      <div className="reviewer-info">
+                        <h4>{review.clientName}</h4>
+                        <span className="review-date">
+                          {new Date(review.createdAt).toLocaleDateString()} at {review.time}
+                        </span>
+                      </div>
+                      <div className="review-rating">
+                        {renderStars(review.rating)}
+                        <span className="rating-text">({review.rating}/5)</span>
+                      </div>
+                    </div>
+                    {review.review && (
+                      <div className="review-content">
+                        <p>"{review.review}"</p>
+                      </div>
+                    )}
+                    <div className="session-info">
+                      <span className="session-type">{review.sessionType} Session</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="no-reviews">
+                <div className="empty-state">
+                  <h3>No Reviews Yet</h3>
+                  <p>Your client reviews will appear here once clients rate their sessions.</p>
+                  <p>Keep providing great service to earn reviews!</p>
+                </div>
               </div>
             )}
           </div>
