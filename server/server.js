@@ -20,7 +20,7 @@ if (geminiApiKey && geminiApiKey.startsWith("AIzaSy")) {
 
 const app = express();
 
-// Middleware - Simple CORS configuration that works
+// Middleware - CORS configuration
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -33,7 +33,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Auth middleware
 const authMiddleware = (req, res, next) => {
@@ -54,26 +53,22 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Routes
+// API Routes - IMPORTANT: Make sure these paths are correct
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/counsellors', require('./routes/counsellors'));
 app.use('/api/sessions', authMiddleware, require('./routes/sessions'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/availability', require('./routes/availability'));
-// Route now handles AI service injection/check
 app.use('/api/gemini', authMiddleware, (req, res, next) => {
-    // Inject the AI client instance into the request object
     req.ai = ai;
     if (!req.ai) {
-        // Blocks requests if the key was invalid during initialization
         return res.status(503).json({ success: false, message: 'AI service is disabled due to missing API key.' });
     }
     next();
 }, require('./routes/gemini'));
 
-
 // Health check route
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     message: 'Server is running',
@@ -81,18 +76,17 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Basic route for testing
-app.get('/', (req, res) => {
+// Test API route
+app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'Sahay Server is running!',
+    message: 'API is working!',
     environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// Database connection with better error handling
+// Database connection
 const connectDB = async () => {
   try {
-    // Use the MONGODB_URI directly from process.env
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB Atlas connected successfully');
   } catch (error) {
@@ -105,14 +99,8 @@ connectDB();
 
 const PORT = process.env.PORT || 5000;
 
-// Remove the duplicate app.listen and use this:
-if (process.env.NODE_ENV === 'production') {
-  // For Vercel production
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT} in production`);
-  });
-} else {
-  // For local development
+// For Vercel, we need to export the app, not listen
+if (process.env.NODE_ENV === 'development') {
   app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT} in development`);
   });
