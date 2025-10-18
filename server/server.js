@@ -8,32 +8,30 @@ const { GoogleGenAI } = require('@google/genai');
 // --- START: Gemini Client Initialization ---
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
-// Initialize to null. 
 let ai = null; 
 
-// Check if the key exists and starts with the expected prefix before initializing.
 if (geminiApiKey && geminiApiKey.startsWith("AIzaSy")) {
     ai = new GoogleGenAI({ apiKey: geminiApiKey });
     console.log("✅ Gemini AI Client initialized.");
 } else {
-    // If initialization fails (due to a missing key), log the failure gracefully
-    // This serves as the only failure message, replacing the confusing double output.
     console.warn("⚠️ WARNING: GEMINI_API_KEY is missing or invalid. AI features will be disabled.");
 }
 // --- END: Gemini Client Initialization ---
 
-
 const app = express();
 
-// Middleware
+// Middleware - Updated CORS for Vercel
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.CLIENT_URL || [
+    'http://localhost:3000',
+    'https://your-app.vercel.app' // Replace with your actual Vercel URL
+  ],
   credentials: true
 }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Auth middleware
+// Auth middleware (your existing code)
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -52,24 +50,19 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Routes
-// NOTE: Assuming original routing prefixes /api/ROUTE are correct as per your working project.
+// Routes (your existing routes)
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/counsellors', require('./routes/counsellors'));
 app.use('/api/sessions', authMiddleware, require('./routes/sessions'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/availability', require('./routes/availability'));
-// Route now handles AI service injection/check
 app.use('/api/gemini', authMiddleware, (req, res, next) => {
-    // Inject the AI client instance into the request object
     req.ai = ai;
     if (!req.ai) {
-        // Blocks requests if the key was invalid during initialization
         return res.status(503).json({ success: false, message: 'AI service is disabled due to missing API key.' });
     }
     next();
 }, require('./routes/gemini'));
-
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -88,10 +81,18 @@ app.get('/', (req, res) => {
   });
 });
 
-// Database connection with better error handling
+// Serve static files from React build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../build')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../build', 'index.html'));
+  });
+}
+
+// Database connection
 const connectDB = async () => {
   try {
-    // Use the MONGODB_URI directly from process.env
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB Atlas connected successfully');
   } catch (error) {
@@ -104,11 +105,9 @@ connectDB();
 
 const PORT = process.env.PORT || 5000;
 
-// For Vercel deployment
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
+// For Vercel deployment - always listen
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 module.exports = app;
