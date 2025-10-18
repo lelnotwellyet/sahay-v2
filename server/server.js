@@ -20,18 +20,22 @@ if (geminiApiKey && geminiApiKey.startsWith("AIzaSy")) {
 
 const app = express();
 
-// Middleware - Updated CORS for Vercel
+// Middleware - Simple CORS configuration that works
 app.use(cors({
-  origin: process.env.CLIENT_URL || [
+  origin: [
     'http://localhost:3000',
-    'https://your-app.vercel.app' // Replace with your actual Vercel URL
+    'https://sahay-v2-jgdt.vercel.app',
+    'https://sahay-v2.vercel.app'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Auth middleware (your existing code)
+// Auth middleware
 const authMiddleware = (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
@@ -50,19 +54,23 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-// Routes (your existing routes)
+// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/counsellors', require('./routes/counsellors'));
 app.use('/api/sessions', authMiddleware, require('./routes/sessions'));
 app.use('/api/admin', authMiddleware, require('./routes/admin'));
 app.use('/api/availability', require('./routes/availability'));
+// Route now handles AI service injection/check
 app.use('/api/gemini', authMiddleware, (req, res, next) => {
+    // Inject the AI client instance into the request object
     req.ai = ai;
     if (!req.ai) {
+        // Blocks requests if the key was invalid during initialization
         return res.status(503).json({ success: false, message: 'AI service is disabled due to missing API key.' });
     }
     next();
 }, require('./routes/gemini'));
+
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -81,18 +89,10 @@ app.get('/', (req, res) => {
   });
 });
 
-// Serve static files from React build in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../build', 'index.html'));
-  });
-}
-
-// Database connection
+// Database connection with better error handling
 const connectDB = async () => {
   try {
+    // Use the MONGODB_URI directly from process.env
     await mongoose.connect(process.env.MONGODB_URI);
     console.log('MongoDB Atlas connected successfully');
   } catch (error) {
@@ -105,9 +105,17 @@ connectDB();
 
 const PORT = process.env.PORT || 5000;
 
-// For Vercel deployment - always listen
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Remove the duplicate app.listen and use this:
+if (process.env.NODE_ENV === 'production') {
+  // For Vercel production
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT} in production`);
+  });
+} else {
+  // For local development
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT} in development`);
+  });
+}
 
 module.exports = app;
